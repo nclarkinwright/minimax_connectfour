@@ -19,11 +19,27 @@ class Game(object):
 
     def possible_moves(self):
         """Return a list of possible moves given the current board."""
-        # YOU FILL THIS IN
+        moves = []
+        last = len(self.grid[0])
+
+        # Use range, so index is easily appended
+        # Last is not actually last, because range excludes 2nd var
+        for column in range(0, last):
+            if self.grid[0][column] == '-':
+                moves.append(column)
+        return moves
 
     def neighbor(self, col, color):
         """Return a Game instance like this one but with a move made into the specified column."""
-        # YOU FILL THIS IN
+        game = Game(self.grid)
+        last_row = len(self.grid) - 1
+
+        for row in range(last_row, -1, -1):
+            if game.grid[row][col] == '-':
+                game.grid[row][col] = color
+            break
+
+        return game
 
     def utility(self):
         """Return the minimax utility value of this game"""
