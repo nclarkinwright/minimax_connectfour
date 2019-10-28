@@ -84,46 +84,19 @@ class Game(object):
         x = move[1]
 
         # Horizontal check
-        matches = 1
-        go_left = True
-        go_right = True
-        for z in range(1, 4):
-            # Check for bounds and whether non-match was found
-            # Stop checking if non-matching piece was found
-            if z - x >= 0 and go_left:
-                if self.grid[y][x - z] == color:
-                    matches = matches + 1
-                else:
-                    go_left = False
-            if z + x < len(self.grid) and go_right:
-                if self.grid[y][x + z] == color:
-                    matches = matches + 1
-                else:
-                    go_right = False
-        if matches >= 4:
+        horz = ''.join(self.grid[y])
+        if horz.find(color + color + color + color) != -1:
             if color == 'R':
                 return float('inf')
             else:
                 return float('-inf')
 
         # Vertical check
-        matches = 1
-        go_up = True
-        go_down = True
-        for z in range(1, 4):
-            # Check for bounds and whether non-match was found
-            # Stop checking if non-matching piece was found
-            if z - y >= 0 and go_up:
-                if self.grid[y - z][x] == color:
-                    matches = matches - 1
-                else:
-                    go_up = False
-            if z + y < len(self.grid) and go_down:
-                if self.grid[y + z][x] == color:
-                    matches = matches + 1
-                else:
-                    go_down = False
-        if matches >= 4:
+        vert = ''
+        # z is why coord in this loop
+        for z in range(0, len(self.grid)):
+            vert = vert + self.grid[z][x]
+        if vert.find(color + color + color + color) != -1:
             if color == 'R':
                 return float('inf')
             else:
@@ -182,7 +155,7 @@ class Game(object):
         # No winner, board is not full
         return None
 
-    
+
 
     # Reverse x y coords of grid
     def make_vert_grid(self):
