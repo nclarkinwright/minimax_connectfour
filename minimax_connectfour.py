@@ -9,24 +9,10 @@ class Game(object):
     def __init__(self, grid, red_moves = [], black_moves = []):
         """Instances differ by their board."""
         self.grid = copy.deepcopy(grid)  # No aliasing!
-        #
+        # Added for win state checking
         self.red_moves = red_moves
         self.black_moves = black_moves
         self.last_move = ''
-        # Added for win state checking
-        # Each game board keeps version of grid with x and y coords reversed
-        # and list of lists of diagonals
-        self.vert_grid = self.make_vert_grid()
-        #self.diag_grid = self.make_diag_grid()
-
-    key = [[ 0,  1,  2,  3,  4,  5,  6,  7]
-          ,[ 8,  9, 10, 11, 12, 13, 14, 15]
-          ,[16, 17, 18, 19, 20, 21, 22, 23]
-          ,[24, 25, 26, 27, 28, 29, 30, 31]
-          ,[32, 33, 34, 35, 36, 37, 38, 39]
-          ,[40, 41, 42, 43, 44, 45, 46, 47,]
-          ,[48, 49, 50, 51, 52, 53, 54, 55,]
-          ,[56, 57, 58, 59, 60, 61, 62, 63]]
 
     def display(self):
         """Print the game board."""
@@ -39,13 +25,13 @@ class Game(object):
     def possible_moves(self):
         """Return a list of possible moves given the current board."""
         moves = []
-        last = len(self.grid[0])
+        top_row = self.grid[0]
+        index = 0
 
-        # Use range, so index is easily appended
-        # Last is not actually last, because range excludes 2nd var
-        for column in range(0, last):
-            if self.grid[0][column] == '-':
-                moves.append(column)
+        for column in top_row:
+            if column == '-':
+                moves.append(index)
+            index = index + 1
         return moves
 
     def neighbor(self, col, color):
@@ -53,18 +39,12 @@ class Game(object):
         game = Game(self.grid)
         last_row = len(self.grid) - 1
 
+        # Start from bottom, and look for first empty space
         for row in range(last_row, -1, -1):
             if game.grid[row][col] == '-':
                 game.grid[row][col] = color
-                # Record move made
-                if color == 'R':
-                    game.red_moves.append((row, col))
-                if color == 'B':
-                    game.black_moves.append((row, col))
-                game.last_move = color
                 # Stop once move is made
-                break
-        return game
+                return game
 
     def utility(self):
         """Return the minimax utility value of this game"""
@@ -73,91 +53,47 @@ class Game(object):
     def winning_state(self):
         """Returns float("inf") if Red wins; float("-inf") if Black wins;
            0 if board full; None if not full and no winner"""
-        # Get the coords of the last move made and get the color to check
-        if self.last_move == 'R':
-            move = self.red_moves[-1]
-            color = 'R'
-        if self.last_move == 'B':
-            move = self.black_moves[-1]
-            color = 'B'
-        y = move[0]
-        x = move[1]
-
-        # Horizontal check
-        horz = ''.join(self.grid[y])
-        if horz.find(color + color + color + color) != -1:
-            if color == 'R':
-                return float('inf')
-            else:
-                return float('-inf')
-
-        # Vertical check
-        vert = ''
-        # z is why coord in this loop
-        for z in range(0, len(self.grid)):
-            vert = vert + self.grid[z][x]
-        if vert.find(color + color + color + color) != -1:
-            if color == 'R':
-                return float('inf')
-            else:
-                return float('-inf')
-
-        # Diagonal check 1
-        matches = 1
-        go_up_left = True
-        go_down_right = True
-        for z in range(1, 4):
-            # Check for bounds and whether non-match was found
-            # Stop checking if non-matching piece was found
-            if z - y >= 0 and z - x >= 0 and go_up_left:
-                if self.grid[y - z][x - z] == color:
-                    matches = matches - 1
-                else:
-                    go_up_left = False
-            if z + y < len(self.grid) and z + x < len(self.grid) and go_down_right:
-                if self.grid[y + z][x + z] == color:
-                    matches = matches + 1
-                else:
-                    go_down_right = False
-        if matches >= 4:
-            if color == 'R':
-                return float('inf')
-            else:
-                return float('-inf')
-
-        # Diag check 2
-        matches = 1
-        go_up_right = True
-        go_down_left = True
-        for z in range(1, 4):
-            # Check for bounds and whether non-match was found
-            # Stop checking if non-matching piece was found
-            if z - y >= 0 and z + x < len(self.grid) and go_up_right:
-                if self.grid[y - z][x + z] == color:
-                    matches = matches - 1
-                else:
-                    go_up_right = False
-            if z + y < len(self.grid) and z - x >= 0 and go_down_left:
-                if self.grid[y + z][x - z] == color:
-                    matches = matches + 1
-                else:
-                    go_down_left = False
-        if matches >= 4:
-            if color == 'R':
-                return float('inf')
-            else:
-                return float('-inf')
         
+        # Checks for four of same color in a row
+        def victory_check(line):
+            black = 'BBBB'
+            red = 'RRRR'
+            
+            if line.find(red) != -1:
+                return float('inf')
+            if line.find(black) != -1:
+                return float('-inf')
+            else:
+                return None
+
+        # Check horizontal dimension
+        for row in self.grid:
+            v_check = victory_check(''.join(row))
+            if not v_check is None:
+                return v_check
+
+        # Check vertical dimension
+        vert_grid = self.make_vert_grid()
+        for column in vert_grid:
+            v_check = victory_check(''.join(column))
+            if not v_check is None:
+                return v_check
+
+        # Check diagonals and reverse diagonals
+        diag_grid = self.make_diag_grid(4)
+        for diag in diag_grid:
+            v_check = victory_check(''.join(diag))
+            if not v_check is None:
+                return v_check
+
         # Check for tie
         if self.possible_moves() == []:
             return 0
         
         # No winner, board is not full
         return None
-
-
-
-    # Reverse x y coords of grid
+    
+    # Reverse x y coords of board grid, so columns are now rows
     def make_vert_grid(self):
         new_grid = []
         grid_len = len(self.grid)
@@ -170,9 +106,59 @@ class Game(object):
             new_grid.append(sub_grid)
 
         return new_grid
+    
+    # Returns grid of diagonals with length >= min
+    def make_diag_grid(self, min):
+        new_grid = []
+        m = len(self.grid)
+        n = len(self.grid[0])
 
-    # Return list of diagonals
-    #def make_diag_grid(self):
+        # Left side
+        for z in range(m):
+            sub_grid = []
+            y = z
+            x = 0
+            while y >= 0:
+                sub_grid.append(self.grid[y][x])
+                y = y - 1
+                x = x + 1
+            new_grid.append(sub_grid)
+
+        # Bottom
+        for z in range(1, n):
+            sub_grid = []
+            y = m - 1
+            x = z
+            while x <= n - 1:
+                sub_grid.append(self.grid[y][x])
+                y = y - 1
+                x = x + 1
+            new_grid.append(sub_grid)
+
+        # Reverse right
+        for z in range(m):
+            sub_grid = []
+            y = z
+            # x starts at other side for reverse
+            x = n - 1
+            while y >= 0:
+                sub_grid.append(self.grid[y][x])
+                y = y - 1
+                x = x - 1
+            new_grid.append(sub_grid)
+
+        # Reverse bottom
+        for z in range(n - 1, -1, -1):
+            sub_grid = []
+            y = m - 1
+            x = z
+            while x >= 0:
+                sub_grid.append(self.grid[y][x])
+                y = y - 1
+                x = x - 1
+            new_grid.append(sub_grid)
+        
+        return new_grid
 
 
 class Agent(object):
