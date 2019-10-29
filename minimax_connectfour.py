@@ -80,7 +80,7 @@ class Game(object):
                 return v_check
 
         # Check diagonals and reverse diagonals
-        diag_grid = self.make_diag_grid(4)
+        diag_grid = self.make_diag_grid()
         for diag in diag_grid:
             v_check = victory_check(''.join(diag))
             if not v_check is None:
@@ -107,8 +107,8 @@ class Game(object):
 
         return new_grid
     
-    # Returns grid of diagonals with length >= min
-    def make_diag_grid(self, min):
+    # Returns grid of diagonals
+    def make_diag_grid(self):
         new_grid = []
         m = len(self.grid)
         n = len(self.grid[0])
