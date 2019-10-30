@@ -28,8 +28,8 @@ class Game(object):
         top_row = self.grid[0]
         index = 0
 
-        for column in top_row:
-            if column == '-':
+        for col in top_row:
+            if col == '-':
                 moves.append(index)
             index = index + 1
         return moves
@@ -48,7 +48,103 @@ class Game(object):
 
     def utility(self):
         """Return the minimax utility value of this game"""
-        # YOU FILL THIS IN
+        horz_grid = self.grid
+        vert_grid = self.make_vert_grid()
+        diag_grid = self.make_diag_grid()
+        score = 0
+        
+        def scoring_horz(score):
+            # For each row, give a score based on pieces in it
+            for row in horz_grid:
+                # First check for victory.
+                row_str = ''.join(row)
+                v_check = victory_check(row_str)
+                if not v_check is None:
+                    return v_check
+                if row_str.find('R---') != -1 or row_str.find('-R--') != -1 \
+                   or row_str.find('--R-') != -1 or row_str.find('---R') != -1:
+                    score = score + 10
+                if row_str.find('RR--') != -1 or row_str.find('-RR-') != -1 \
+                   or row_str.find('--RR'):
+                    score = score + 100
+                if row_str.find('RRR-') != -1 or row_str.find('-RRR') != -1:
+                    score = score + 1000
+                if row_str.find('BBB-') != -1 or row_str.find('-BBB') != -1:
+                    score = score - 10000
+                if row_str.find('BBBR') != -1 or row_str.find('RBBB') != -1:
+                    score = score + 10000
+            return score
+
+        def scoring_vert(score):
+        # For each column, give a score based on pieces in it
+            for col in vert_grid:
+                col_str = ''.join(col)
+                # First check for victory.
+                v_check = victory_check(col_str)
+                if not v_check is None:
+                    return v_check
+                if col_str.find('R---') != -1:
+                    score = score + 10
+                if col_str.find('RR--') != -1:
+                    score = score + 100
+                if col_str.find('RRR-') != -1:
+                    score = score + 1000
+                if col_str.find('BBB-') != -1:
+                    score = score - 10000
+                if col_str.find('BBBR') != -1:
+                    score = score + 10000
+            return score
+
+        def scoring_diag(score):
+            # For each diag, give a score based on pieces in it
+            for diag in diag_grid:
+                diag_str = ''.join(diag)
+                # First check for victory.
+                v_check = victory_check(diag_str)
+                if not v_check is None:
+                    return v_check
+                if diag_str.find('R---') != -1 or diag_str.find('-R--') != -1 \
+                   or diag_str.find('--R-') != -1 or diag_str.find('---R') != -1:
+                    score = score + 10
+                if diag_str.find('RR--') != -1 or diag_str.find('-RR-') != -1 \
+                   or diag_str.find('--RR'):
+                    score = score + 100
+                if diag_str.find('RRR-') != -1 or diag_str.find('-RRR') != -1:
+                    score = score + 1000
+                if diag_str.find('BBB-') != -1 or diag_str.find('-BBB') != -1:
+                    score = score - 10000
+                if diag_str.find('BBBR') != -1 or diag_str.find('RBBB') != -1:
+                    score = score + 10000
+            return score
+        
+        # Checks for four of same color in a row
+        def victory_check(line):
+            black = 'BBBB'
+            red = 'RRRR'
+                    
+            if line.find(red) != -1:
+                return float('inf')
+            if line.find(black) != -1:
+                return float('-inf')
+            else:
+                return None
+
+        horz_score = scoring_horz(score)
+        if horz_score == float('inf') or horz_score == float('-inf'):
+            return horz_score
+        score = score + horz_score        
+        
+        vert_score = scoring_vert(score)
+        if vert_score == float('inf') or vert_score == float('-inf'):
+            return vert_score
+        score = score + vert_score
+        
+        diag_score = scoring_diag(score)
+        if diag_score == float('inf') or diag_score == float('-inf'):
+            return diag_score
+        score = score + diag_score
+        
+        return score
 
     def winning_state(self):
         """Returns float("inf") if Red wins; float("-inf") if Black wins;
@@ -58,7 +154,7 @@ class Game(object):
         def victory_check(line):
             black = 'BBBB'
             red = 'RRRR'
-            
+                    
             if line.find(red) != -1:
                 return float('inf')
             if line.find(black) != -1:
@@ -160,7 +256,6 @@ class Game(object):
         
         return new_grid
 
-
 class Agent(object):
     """Abstract class, extended by classes RandomAgent, FirstMoveAgent, MinimaxAgent.
     Do not make an instance of this class."""
@@ -202,7 +297,24 @@ class MinimaxAgent(Agent):
 
     def move(self, game):
         """Returns the best move using minimax"""
-        # YOU FILL THIS IN
+        moves = game.possible_moves()
+        highest_utility = float('-inf')
+        move_to_make = -1
+
+        # This is currently just a 'max' algorithm
+        for possible_move in moves:
+            possible_game = game.neighbor(possible_move, 'R')
+            pg_utility = possible_game.utility()
+            if pg_utility > highest_utility:
+                highest_utility = pg_utility
+                move_to_make = possible_move
+
+        if move_to_make == -1:
+            print("Move to make is -1")
+        ##    random_num = random.randint(0, len(moves) - 1)
+        ##    move_to_make = moves[random_num]
+        
+        return move_to_make
 
 def tournament(simulations=50):
     """Simulate connect four games, of a minimax agent playing
