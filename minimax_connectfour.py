@@ -61,18 +61,17 @@ class Game(object):
                 v_check = victory_check(row_str)
                 if not v_check is None:
                     return v_check
-                if row_str.find('R---') != -1 or row_str.find('-R--') != -1 \
-                   or row_str.find('--R-') != -1 or row_str.find('---R') != -1:
-                    score = score + 10
                 if row_str.find('RR--') != -1 or row_str.find('-RR-') != -1 \
                    or row_str.find('--RR'):
-                    score = score + 100
+                    score = score + 10
                 if row_str.find('RRR-') != -1 or row_str.find('-RRR') != -1:
+                    score = score + 100
+                if row_str.find('BBB-') != -1 or row_str.find('-BBB') != -1 \
+                   or row_str.find('B-BB') != -1 or row_str.find('BB-B') != -1:
+                    score = score - 1000
+                if row_str.find('BBBR') != -1 or row_str.find('RBBB') != -1 \
+                   or row_str.find('BRBB') != -1 or row_str.find('BBRB') != -1:
                     score = score + 1000
-                if row_str.find('BBB-') != -1 or row_str.find('-BBB') != -1:
-                    score = score - 10000
-                if row_str.find('BBBR') != -1 or row_str.find('RBBB') != -1:
-                    score = score + 10000
             return score
 
         def scoring_vert(score):
@@ -83,16 +82,14 @@ class Game(object):
                 v_check = victory_check(col_str)
                 if not v_check is None:
                     return v_check
-                if col_str.find('R---') != -1:
-                    score = score + 10
                 if col_str.find('RR--') != -1:
-                    score = score + 100
+                    score = score + 10
                 if col_str.find('RRR-') != -1:
-                    score = score + 1000
+                    score = score + 100
                 if col_str.find('BBB-') != -1:
-                    score = score - 10000
-                if col_str.find('BBBR') != -1:
-                    score = score + 10000
+                    score = score - 1000
+                if col_str.find('BBBR-') != -1:
+                    score = score + 1000
             return score
 
         def scoring_diag(score):
@@ -103,18 +100,17 @@ class Game(object):
                 v_check = victory_check(diag_str)
                 if not v_check is None:
                     return v_check
-                if diag_str.find('R---') != -1 or diag_str.find('-R--') != -1 \
-                   or diag_str.find('--R-') != -1 or diag_str.find('---R') != -1:
-                    score = score + 10
                 if diag_str.find('RR--') != -1 or diag_str.find('-RR-') != -1 \
                    or diag_str.find('--RR'):
-                    score = score + 100
+                    score = score + 10
                 if diag_str.find('RRR-') != -1 or diag_str.find('-RRR') != -1:
+                    score = score + 100
+                if diag_str.find('BBB-') != -1 or diag_str.find('-BBB') != -1 \
+                    or diag_str.find('B-BB') != -1 or diag_str.find('BB-B') != -1:
+                    score = score - 1000
+                if diag_str.find('BBBR') != -1 or diag_str.find('RBBB') != -1 \
+                   or diag_str.find('BRBB') != -1 or diag_str.find('BBRB') != -1:
                     score = score + 1000
-                if diag_str.find('BBB-') != -1 or diag_str.find('-BBB') != -1:
-                    score = score - 10000
-                if diag_str.find('BBBR') != -1 or diag_str.find('RBBB') != -1:
-                    score = score + 10000
             return score
         
         # Checks for four of same color in a row
@@ -297,22 +293,60 @@ class MinimaxAgent(Agent):
 
     def move(self, game):
         """Returns the best move using minimax"""
+        # Root move. Calls min_move
+        # Minimax tree goes to depth 3
         moves = game.possible_moves()
         highest_utility = float('-inf')
         move_to_make = -1
 
-        # This is currently just a 'max' algorithm
         for possible_move in moves:
             possible_game = game.neighbor(possible_move, 'R')
-            pg_utility = possible_game.utility()
+            # Second parameter sets depth
+            pg_utility = self.min_move(possible_game, 2)
             if pg_utility > highest_utility:
                 highest_utility = pg_utility
                 move_to_make = possible_move
+        
+        return move_to_make
 
-        if move_to_make == -1:
-            print("Move to make is -1")
-        ##    random_num = random.randint(0, len(moves) - 1)
-        ##    move_to_make = moves[random_num]
+    # Second parameter sets depth
+    def min_move(self, game, depth):
+        # Returns move with the lowest utility
+        moves = game.possible_moves()
+        lowest_utility = float('inf')
+        move_to_make = -1
+        
+        depth = depth - 1
+        for possible_move in moves:
+            possible_game = game.neighbor(possible_move, 'B')
+            if depth <= 0:
+                pg_utility = possible_game.utility()
+            if depth > 0:
+                pg_utility = self.max_move(possible_game, depth)
+            if pg_utility < lowest_utility:
+                lowest_utility = pg_utility
+                move_to_make = possible_move
+        
+        return move_to_make
+    
+    # Second parameter sets depth
+    def max_move(self, game, depth):
+        # Base case max move. Does not call min move
+        moves = game.possible_moves()
+        highest_utility = float('-inf')
+        move_to_make = -1
+
+        depth = depth - 1
+        for possible_move in moves:
+            possible_game = game.neighbor(possible_move, 'R')
+            pg_utility = possible_game.utility()
+            if depth <= 0:
+                pg_utility = possible_game.utility()
+            if depth > 0:
+                pg_utility = self.min_move(possible_game, depth)
+            if pg_utility > highest_utility:
+                highest_utility = pg_utility
+                move_to_make = possible_move
         
         return move_to_make
 
