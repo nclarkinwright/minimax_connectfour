@@ -51,7 +51,6 @@ class Game(object):
         horz_grid = self.grid
         vert_grid = self.make_vert_grid()
         diag_grid = self.make_diag_grid()
-        score = 0
         
         def scoring_horz(score):
             # For each row, give a score based on pieces in it
@@ -59,19 +58,23 @@ class Game(object):
                 # First check for victory.
                 row_str = ''.join(row)
                 v_check = victory_check(row_str)
-                if not v_check is None:
+                if v_check is not None:
                     return v_check
                 if row_str.find('RR--') != -1 or row_str.find('-RR-') != -1 \
                    or row_str.find('--RR'):
+                    score = score + 1
+                if row_str.find('BB--') != -1 or row_str.find('-BB-') != -1 \
+                   or row_str.find('--BB'):
+                    score = score - 1
+                if row_str.find('RRR-') != -1 or row_str.find('-RRR') != -1 \
+                   or row_str.find('RR-R') != -1 or row_str.find('R-RR'):
                     score = score + 10
-                if row_str.find('RRR-') != -1 or row_str.find('-RRR') != -1:
-                    score = score + 100
                 if row_str.find('BBB-') != -1 or row_str.find('-BBB') != -1 \
                    or row_str.find('B-BB') != -1 or row_str.find('BB-B') != -1:
-                    score = score - 1000
+                    score = score - 30
                 if row_str.find('BBBR') != -1 or row_str.find('RBBB') != -1 \
                    or row_str.find('BRBB') != -1 or row_str.find('BBRB') != -1:
-                    score = score + 1000
+                    score = score + 100
             return score
 
         def scoring_vert(score):
@@ -80,16 +83,18 @@ class Game(object):
                 col_str = ''.join(col)
                 # First check for victory.
                 v_check = victory_check(col_str)
-                if not v_check is None:
+                if v_check is not None:
                     return v_check
                 if col_str.find('RR--') != -1:
-                    score = score + 10
+                    score = score + 1
+                if col_str.find('BB--') != -1:
+                    score = score - 1
                 if col_str.find('RRR-') != -1:
-                    score = score + 100
+                    score = score + 10
                 if col_str.find('BBB-') != -1:
-                    score = score - 1000
+                    score = score - 30
                 if col_str.find('BBBR-') != -1:
-                    score = score + 1000
+                    score = score + 100
             return score
 
         def scoring_diag(score):
@@ -98,19 +103,23 @@ class Game(object):
                 diag_str = ''.join(diag)
                 # First check for victory.
                 v_check = victory_check(diag_str)
-                if not v_check is None:
+                if v_check is not None:
                     return v_check
                 if diag_str.find('RR--') != -1 or diag_str.find('-RR-') != -1 \
                    or diag_str.find('--RR'):
+                    score = score + 1
+                if diag_str.find('BB--') != -1 or diag_str.find('-BB-') != -1 \
+                   or diag_str.find('--BB'):
+                    score = score - 1
+                if diag_str.find('RRR-') != -1 or diag_str.find('-RRR') != -1 \
+                   or diag_str.find('RR-R') != -1 or diag_str.find('R-RR'):
                     score = score + 10
-                if diag_str.find('RRR-') != -1 or diag_str.find('-RRR') != -1:
-                    score = score + 100
                 if diag_str.find('BBB-') != -1 or diag_str.find('-BBB') != -1 \
                     or diag_str.find('B-BB') != -1 or diag_str.find('BB-B') != -1:
-                    score = score - 1000
+                    score = score - 30
                 if diag_str.find('BBBR') != -1 or diag_str.find('RBBB') != -1 \
                    or diag_str.find('BRBB') != -1 or diag_str.find('BBRB') != -1:
-                    score = score + 1000
+                    score = score + 100
             return score
         
         # Checks for four of same color in a row
@@ -125,6 +134,7 @@ class Game(object):
             else:
                 return None
 
+        score = 0
         horz_score = scoring_horz(score)
         if horz_score == float('inf') or horz_score == float('-inf'):
             return horz_score
@@ -161,21 +171,21 @@ class Game(object):
         # Check horizontal dimension
         for row in self.grid:
             v_check = victory_check(''.join(row))
-            if not v_check is None:
+            if v_check is not None:
                 return v_check
 
         # Check vertical dimension
         vert_grid = self.make_vert_grid()
         for column in vert_grid:
             v_check = victory_check(''.join(column))
-            if not v_check is None:
+            if v_check is not None:
                 return v_check
 
         # Check diagonals and reverse diagonals
         diag_grid = self.make_diag_grid()
         for diag in diag_grid:
             v_check = victory_check(''.join(diag))
-            if not v_check is None:
+            if v_check is not None:
                 return v_check
 
         # Check for tie
@@ -298,11 +308,12 @@ class MinimaxAgent(Agent):
         moves = game.possible_moves()
         highest_utility = float('-inf')
         move_to_make = -1
+        depth = 2 # Really depth + 1
 
         for possible_move in moves:
             possible_game = game.neighbor(possible_move, 'R')
             # Second parameter sets depth
-            pg_utility = self.min_move(possible_game, 2)
+            pg_utility = self.min_move(possible_game, depth)
             if pg_utility > highest_utility:
                 highest_utility = pg_utility
                 move_to_make = possible_move
@@ -317,6 +328,7 @@ class MinimaxAgent(Agent):
         move_to_make = -1
         
         depth = depth - 1
+       
         for possible_move in moves:
             possible_game = game.neighbor(possible_move, 'B')
             if depth <= 0:
@@ -325,16 +337,14 @@ class MinimaxAgent(Agent):
                 pg_utility = self.max_move(possible_game, depth)
             if pg_utility < lowest_utility:
                 lowest_utility = pg_utility
-                move_to_make = possible_move
         
-        return move_to_make
+        return lowest_utility
     
     # Second parameter sets depth
     def max_move(self, game, depth):
         # Base case max move. Does not call min move
         moves = game.possible_moves()
         highest_utility = float('-inf')
-        move_to_make = -1
 
         depth = depth - 1
         for possible_move in moves:
@@ -346,9 +356,8 @@ class MinimaxAgent(Agent):
                 pg_utility = self.min_move(possible_game, depth)
             if pg_utility > highest_utility:
                 highest_utility = pg_utility
-                move_to_make = possible_move
         
-        return move_to_make
+        return highest_utility
 
 def tournament(simulations=50):
     """Simulate connect four games, of a minimax agent playing
