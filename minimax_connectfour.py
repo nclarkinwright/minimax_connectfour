@@ -1,3 +1,6 @@
+# Nicholas Clarkin-Wright
+# nc819094@wcupa.edu
+
 import copy
 import time
 import abc
